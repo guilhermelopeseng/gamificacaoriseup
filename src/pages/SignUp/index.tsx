@@ -1,10 +1,10 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   Alert,
   Image,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -20,25 +20,22 @@ import getValidationErrors from '../../utils/getValidationErrors';
 
 import logoImg from '../../assets/logo.png';
 
-import {
-  Container,
-  Title,
-  CreateAccountButton,
-  CreateAccountButtonText,
-} from './styles';
+import { Container, Title, BackToSignIn, BackToSignInText } from './styles';
 
-interface SignInFormData {
+interface SignUpFormData {
+  name: string;
   email: string;
   password: string;
 }
 
-const SignIn: React.FC = () => {
+const SignUp: React.FC = () => {
+  const navigation = useNavigation();
   const formRef = useRef<FormHandles>(null);
-  const handleSignIn = useCallback(async (data: SignInFormData) => {
+  const handleSignUp = useCallback(async (data: SignUpFormData) => {
     try {
       formRef.current?.setErrors({});
-
       const schema = Yup.object().shape({
+        name: Yup.string().required('Nome obrigatório'),
         email: Yup.string()
           .required('Email obrigatório')
           .email('Digite um email válido'),
@@ -50,8 +47,8 @@ const SignIn: React.FC = () => {
       });
 
       Alert.alert(
-        'Login efetuado com sucesso',
-        'Você já pode aproveitar o App',
+        'Cadastro realizado com sucesso',
+        'Você já pode fazer login na aplicação',
       );
     } catch (err) {
       if (err instanceof Yup.ValidationError) {
@@ -67,8 +64,6 @@ const SignIn: React.FC = () => {
       );
     }
   }, []);
-
-  const navigation = useNavigation();
   return (
     <>
       <KeyboardAvoidingView
@@ -83,13 +78,19 @@ const SignIn: React.FC = () => {
           <Container>
             <Image source={logoImg} />
 
-            <Title>Faça o seu Login</Title>
+            <Title>Faça o seu Cadastro</Title>
 
             <Form
               ref={formRef}
-              onSubmit={handleSignIn}
+              onSubmit={handleSignUp}
               style={{ width: '100%' }}
             >
+              <Input
+                autoCapitalize="words"
+                name="name"
+                icon="user"
+                placeholder="Nome"
+              />
               <Input
                 keyboardType="email-address"
                 autoCorrect={false}
@@ -110,21 +111,20 @@ const SignIn: React.FC = () => {
                   formRef.current?.submitForm();
                 }}
               >
-                Entrar
+                Cadastrar
               </Button>
             </Form>
           </Container>
         </ScrollView>
       </KeyboardAvoidingView>
-
-      <CreateAccountButton>
-        <CreateAccountButtonText onPress={() => navigation.navigate('SignUp')}>
-          <Icon name="log-in" size={20} />
-          Criar uma conta
-        </CreateAccountButtonText>
-      </CreateAccountButton>
+      <BackToSignIn onPress={() => navigation.goBack()}>
+        <BackToSignInText>
+          <Icon name="arrow-left" size={20} />
+          Voltar para Login
+        </BackToSignInText>
+      </BackToSignIn>
     </>
   );
 };
 
-export default SignIn;
+export default SignUp;
