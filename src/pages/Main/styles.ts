@@ -91,4 +91,5 @@ export const HistoricBlock = styled.View`
 
 export const ScoreText = styled.Text`
   font-size: 15px;
+  text-align: center;
 `;

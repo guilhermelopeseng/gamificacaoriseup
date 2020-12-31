@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Image } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 
@@ -21,23 +21,54 @@ import {
 import { useAuth } from '../../hooks/auth';
 import api from '../../services/api';
 
+interface HistoricData {
+  id: string;
+  title: string;
+  points: number;
+}
+
+interface Request {
+  data: HistoricData[];
+}
+
 const Main: React.FC = () => {
-  const { signOut, token } = useAuth();
+  const [historic, setHistoric] = useState<HistoricData[]>([]);
+  const [score, setScore] = useState<Number>(0);
+  const { signOut, token, user } = useAuth();
+
+  const signOutApp = useCallback(() => {
+    setHistoric([]);
+    signOut();
+  }, [signOut]);
 
   useEffect(() => {
     const config = {
       headers: { Authorization: `Bearer ${token}` },
     };
+    api
+      .get('/scores', config)
+      .then((response) => {
+        const { data }: Request = response;
 
-    const getHistoric = async () => {
-      const historic = await api.get('/scores', config);
-      console.log(historic.data);
-    };
-    getHistoric();
-  }, [token]);
+        setHistoric(data);
+      })
+      .catch((err) => {
+        throw new Error('Erro na requisição');
+      });
+    const scores = historic.map((item) => {
+      return item.points;
+    });
+    if (scores[0]) {
+      const totalScores = scores.reduce((total, next) => {
+        return total + next;
+      });
+      setScore(totalScores);
+    }
+  }, [token, historic]);
+
   return (
     <Container>
-      <Header onPress={signOut}>
+      <Header onPress={signOutApp}>
         <HeaderText>
           <Icon name="arrow-left" size={20} />
           MEU PERFIL
@@ -46,50 +77,20 @@ const Main: React.FC = () => {
       <Block>
         <Image source={logoImg} style={{ width: '35%', height: '100%' }} />
         <Details>
-          <DetailsText>Nome: Guilherme</DetailsText>
-          <DetailsText>Cargo: Assessor de Gestão de Pessoas</DetailsText>
-          <DetailsText>Pontos: 10 pts</DetailsText>
+          <DetailsText>Nome: {user.name}</DetailsText>
+          <DetailsText>Cargo: {user.directorship}</DetailsText>
+          <DetailsText>Pontos: {score} pts</DetailsText>
         </Details>
       </Block>
       <Historic>
         <HistoricText>Histórico</HistoricText>
         <HistoricView>
-          <HistoricBlock>
-            <ScoreText>Elaboração</ScoreText>
-            <ScoreText>100 pts</ScoreText>
-          </HistoricBlock>
-          <HistoricBlock>
-            <ScoreText>Elaboração do App</ScoreText>
-            <ScoreText>100 pts</ScoreText>
-          </HistoricBlock>
-          <HistoricBlock>
-            <ScoreText>Elaboração do App</ScoreText>
-            <ScoreText>100 pts</ScoreText>
-          </HistoricBlock>
-          <HistoricBlock>
-            <ScoreText>Elaboração do App</ScoreText>
-            <ScoreText>100 pts</ScoreText>
-          </HistoricBlock>
-          <HistoricBlock>
-            <ScoreText>Elaboração do App</ScoreText>
-            <ScoreText>100 pts</ScoreText>
-          </HistoricBlock>
-          <HistoricBlock>
-            <ScoreText>Elaboração do App</ScoreText>
-            <ScoreText>100 pts</ScoreText>
-          </HistoricBlock>
-          <HistoricBlock>
-            <ScoreText>Elaboração do App</ScoreText>
-            <ScoreText>100 pts</ScoreText>
-          </HistoricBlock>
-          <HistoricBlock>
-            <ScoreText>Elaboração do App</ScoreText>
-            <ScoreText>100 pts</ScoreText>
-          </HistoricBlock>
-          <HistoricBlock>
-            <ScoreText>Elaboração do App</ScoreText>
-            <ScoreText>100 pts</ScoreText>
-          </HistoricBlock>
+          {historic.map((item) => (
+            <HistoricBlock key={item.id}>
+              <ScoreText>{item.title}</ScoreText>
+              <ScoreText>{item.points} pontos</ScoreText>
+            </HistoricBlock>
+          ))}
         </HistoricView>
       </Historic>
     </Container>
